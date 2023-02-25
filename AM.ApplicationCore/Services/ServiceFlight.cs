@@ -13,7 +13,7 @@ namespace AM.ApplicationCore.Services
 
         public IList<Flight> Flights = new List<Flight>();
 
-        public IList<DateTime> GetFlightDates(string destination)
+        public IEnumerable<DateTime> GetFlightDates(string destination)
         {
 
             //Foreach  : méthode classique 
@@ -39,22 +39,26 @@ namespace AM.ApplicationCore.Services
 
 
             // a = flight
-
-            var query = from A in Flights
-                        where A.Destination.Equals(destination)
-                        select A.FlightDate;
-            return query.ToList();                
+            // linq
+            // var query = from A in Flights
+            //              where A.Destination.Equals(destination)
+            //               select A.FlightDate;
+            //  return query;    
+            // lambda
+            return Flights.Where(i => i.Destination.Equals(destination)).Select(f => f.FlightDate);
         }
 
        
 
         public void ShowFlightDetails(Plane plane)
         {
+            //linq
+            //var query = from a in Flights
+            //            where a.Plane.Equals(plane)
+            //            select new { a.Destination, a.FlightDate };
+            //lambda
 
-            var query = from a in Flights
-                        where a.Plane.Equals(plane)
-                        select new { a.Destination, a.FlightDate };
-
+            var query =plane.Flights.Select(i => new { i.Destination, i.FlightDate });
             foreach (var item in query)
             {
                 Console.WriteLine("FlightDate" +item.FlightDate + "Destination "+item.Destination );
@@ -65,21 +69,69 @@ namespace AM.ApplicationCore.Services
 
         public int ProgrammedFlightNumber(DateTime startDate)
         {
-            var query = from a in Flights
-                        where (startDate - a.FlightDate).TotalDays < 7
-                        select a;
-            return query.Count();
+            //linq
+            //var query = from a in Flights
+            //            where (startDate - a.FlightDate).TotalDays < 7
+            //            select a;
+            //return query.Count();
+            //lambda
+            return Flights.Where(a => (startDate - a.FlightDate).TotalDays < 7).Count();
 
         }
 
         public double DurationAverage(string destination)
         {
-           return
-                (from a in Flights
-                 where a.Destination == destination
-             select a.EstimatedDuration
-             ).Average();
-           
+            //linq
+            //return
+            //     (from a in Flights
+            //      where a.Destination == destination
+            //  select a.EstimatedDuration
+            //  ).Average();
+            //lambda
+            //return Flights.Where(i => i.Destination == destination).Select(a => a.EstimatedDuration).Average();
+
+            return Flights.Where(i => i.Destination == destination).Average(a => a.EstimatedDuration);
+
+
+        }
+        public IEnumerable<Flight> OrderedDurationFlights()
+        {
+            var query = from a in Flights
+                        orderby a.EstimatedDuration descending
+                        select a;
+            return query;
+
+        }
+
+      
+
+        IEnumerable<Traveller> SeniorTravellers(Flight flight)
+        {
+            //linq
+            //var query = from a in flight.Passengers.OfType<Traveller>()
+            //            orderby a.BirthDate
+            //            select a;
+            //return query.Take(3);
+            //lambda
+            return flight.Passengers.OfType<Traveller>().OrderBy(f => f.BirthDate).Take(3);
+        }
+
+        public IEnumerable<IGrouping<string, Flight>> DestinationGroupedFlights()
+        {
+            //linq
+            //var query = from a in Flights
+            //            group a by a.Destination;
+            //lambda
+            var query = Flights.GroupBy(i => i.Destination);
+            foreach (var item in query)
+            {
+                Console.WriteLine("Destination" + item.Key);
+                foreach( var i in item)
+                {
+                    Console.WriteLine("Décollage : " + i.FlightDate);
+                }
+            }
+            return query;
         }
     }
 }
